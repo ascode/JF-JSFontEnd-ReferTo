@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>HTML语义化：HTML5新标签——template</title>
+  <link rel="stylesheet" href="">
+</head>
+<body>
+  <h1>HTML语义化：HTML5新标签——template</h1>
+
+<h2>一、前言</h2>　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+<xmp>
+  当我们使用String-base的模板引擎（如Handlebars.js等）时，要么就通过外部文件存放模板文本，需要时再通过XHR或script标签加载进来；要么通过<script type="text/x-template"></script>等标签直接写在当前页面上。现在HTML5为我们提供了一个全新的template标签，以更统一、有效的方式存放String-base模板引擎的模板文本了！
+
+  目录：
+
+  二、那些年我们存放模板文本的方式
+
+  　　1. script标签
+
+        2. textarea标签
+
+        3. xmp标签
+
+  三、template标签的新视觉
+
+　　   1. 不一样的childNodes
+
+　　　2. 伪文档片段入口——content属性
+
+ </xmp>
+
+<h2>二、那些年我们存放模板文本的方式</h2>　　　　　　　　　　　　　　　　　　
+<xmp>
+  首先要明确模板文档具有以下2个要求：
+
+    1.  <> "' 不被转成字符实体；
+
+    2. 含src特性的img标签不触发资源请求。
+
+  下面是常用的存放方式：
+</xmp>
+    <h3>1. script标签</h3>
+<xmp>
+复制代码
+// 模板文本
+<script id="tpl" type="text/x-template">
+<img src="dummy.png" title="{{title}}"/>
+</script>
+
+// 获取模板
+<script type="text/javascript">
+// 不能通过innerText获取，因为innerText无法获取<img/>等标签字符
+var tpl = document.getElementById('tpl').innerHTML
+tpl = tpl.replace(/^[\s\u3000]*|[\s\u3000]*$/, '')
+Handlebars.compile(tpl)({title: 'test'})
+</script>
+复制代码
+   注意：
+
+     1. 若模板中包含</script>标签会造成标签结束符混乱的问题，因此通过该方式存放模板时，不能包含</script>结束标签;
+
+     2. script标签位置较随意，可以作为head或body的子元素。
+</xmp>
+
+　<h3>2. textarea标签</h3>
+<xmp>
+复制代码
+// 模板文本
+<textarea id="tpl" style="display:none;">
+<img src="dummy.png" title="{{title}}"/>
+</textarea>
+
+// 获取模板
+<script type="text/javascript">
+var tplEl = document.getElementById('tpl')
+var tpl = tplEl.value
+// 通过tplEl.innerText获取也可以。但不能通过tplEl.innerHTML获取，因为它会对<>"'等转换为字符实体
+tpl = tpl.replace(/^[\s\u3000]*|[\s\u3000]*$/, '')
+Handlebars.compile(tpl)({title: 'test'})
+</script>
+复制代码
+    注意：
+
+　　1. 若模板中包含</textarea>标签会造成标签结束符混乱的问题，因此通过该方式存放模板时，不能包含</textarea>结束标签；
+
+　　2. textarea元素必须作为body的子孙元素。
+</xmp>
+
+
+    <h3>3. xmp标签（语义为标识内容用作示例，现已被标准废除了，但各大浏览器依然支持该标签）</h3>
+
+复制代码
+// 模板文本
+<xmp id="tpl" style="display:none;">
+<img src="dummy.png" title="{{title}}"/>
+</xmp>
+
+// 获取模板
+<script type="text/javascript">
+var tplEl = document.getElementById('tpl')
+var tpl = tplEl.innerHTML
+// 通过tplEl.innerText获取也可以
+tpl = tpl.replace(/^[\s\u3000]*|[\s\u3000]*$/, '')
+Handlebars.compile(tpl)({title: 'test'})
+</script>
+复制代码
+    注意：
+
+　　1. 若模板中包含</xmp>标签会造成标签结束符混乱的问题，因此通过该方式存放模板时，不能包含</xmp>结束标签；
+
+　　2. xmp元素必须作为body的子孙元素。
+
+  由于模板文本中出现<script>标签的情况较少，而出现表单元素<textarea>标签的几率较大，而xmp标签已被废弃，因此还是通过script标签存放模板文本的方式较为常见。
+
+ 
+
+三、template标签的新视觉　　　　　　　　　　　　　　　　　　　　　　
+
+  2013年定稿的template标签为我们提供一种更统一、功能更强大的模板文本存放方式。而它基本的使用方式与之前的3种方式无太大差别：
+
+复制代码
+// 模板文本
+<template id="tpl">
+<img src="dummy.png" title="{{title}}"/>
+</template>
+
+// 获取模板
+<script type="text/javascript">
+var tplEl = document.getElementById('tpl')
+// 通过tplEl.innerText获取也可以
+var tpl = tplEl.innerHTML
+tpl = tpl.replace(/^[\s\u3000]*|[\s\u3000]*$/, '')
+Handlebars.compile(tpl)({title: 'test'})
+</script>
+复制代码
+   注意：
+
+     1. 若模板中包含</template>标签会造成标签结束符混乱的问题，因此通过该方式存放模板时，不能包含</template>结束标签;
+
+     2. script标签位置较随意，可以作为head或body的子元素。
+
+   到这里大家会觉得template标签除了作为W3C标准外，跟script标签没多大的差别。那是因为我们还没对其深入而已啦，下面我们将对其一一了解吧！
+
+   1. 不一样的childNodes
+
+     script、textarea和xmp方式存放模板文本时，通过 tplEl.childNodes.length 均返回1， tplEl.childNodes[0].nodeName 均返回#text。而template返回的是0。
+
+   2. 伪文档片段入口——content属性
+
+     通过innerHTML或innerText属性，template内部的模板文本将被视为普通文本来使用。但template元素为我们提供了另一种使用方式，那就是“文档片段”。
+
+     “文档片段”的[[Class]]为[object DocumentFragment]，“文档片段”具有文档片段的所有功能API，不同的是设置img元素的src属性不会发出资源请求、不执行Script和CSS规则，而[object HTMLDocument]“文档”则会发送img请求并在当前browsing context(即window对象上下文)内执行Script和CSS规则。
+
+而我们可以通过content属性获取“文档片段”。
+
+复制代码
+var tplEl = document.getElementById('tpl')
+var x = tplEl.content
+var img = x.querySelector('img')
+console.log(img.src) // 显示空字符串
+console.log(img.getAttribute('src')) // 显示dummy.png
+img.src = img.getAttribute('src')
+console.log(img.src) // 显示about:blank
+复制代码
+    当添加到当前文档中才会发起资源请求。
+
+document.body.appendChild(img)
+// 发起资源请求
+console.log(tplEl.innerHTML.replace(/^[\s\u3000]*|[\s\u3000]*$/,'')) // 显示空白字符串
+    由于appendChild方法实际上会对元素进行剪切操作，因此无法实现模板复用的效果。因此我们需要复制模板内的元素，然后再将元素副本添加到当前文档中。实现手段有很多种，大家可以自行了解一下。
+
+    那么怎样将整个template提供的DocumentFragment导出到当前document呢？答案就是采用IE9+才有的document.importNode方法了。
+
+var tplEl = document.getElementById('tpl')
+var x = tplEl.content
+var clone = document.importNode(x, true)
+document.body.appendChild(x)
+ 
+
+四、总结　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+
+  本篇为拜读张鑫旭《HTML5 <template>标签元素简介》后的笔记+个人经验总结，就写到这里吧！
+
+  尊重原创，转载请注明来自：http://www.cnblogs.com/fsjohnhuang/p/4175711.html ^_^肥子John
+
+ 
+
+五、参考　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+
+http://www.zhangxinxu.com/wordpress/2014/07/hello-html5-template-tag/
+
+https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template
+
+
+</body>
+</html>
+
+

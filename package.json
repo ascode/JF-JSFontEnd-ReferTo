@@ -1,0 +1,26 @@
+{
+  "name": "js-font-end-refer-to",
+  "version": "1.0.0",
+  "description": "模块化起源，模块化起源于nodejs，在nodejs中我们像引入模块一样引入一个js文件。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ascode/JF-JSFontEnd-ReferTo.git"
+  },
+  "author": "金飞",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ascode/JF-JSFontEnd-ReferTo/issues"
+  },
+  "homepage": "https://github.com/ascode/JF-JSFontEnd-ReferTo#readme",
+  "dependencies": {
+    "babel-preset-react": "^6.23.0",
+    "babelify": "^7.3.0",
+    "express": "^4.15.2",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
+  }
+}
