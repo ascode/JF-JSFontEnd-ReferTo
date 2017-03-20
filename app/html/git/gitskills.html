@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>git妙用</title>
+	<link rel="stylesheet" href="">
+</head>
+<body>
+<h1>终端下如何配置 git 使其可以同时 push 到两个远程仓库？</h1>
+
+<xmp>
+	我用过两种方法，最早的时候是设定多个 remote，然后写一个 alias，比如：
+
+$ git config alias.pushall "!git push origin && git push dev"
+后来在某一个版本（忘了具体的版本号）升级之后，Git 多了一项设置，使得你可以为一个 remote 设置多个 pushurl。比如说你问题里的例子，我可以不要 remote "dev"，只留下 remote "origin"，然后加一句：
+
+git remote --set-url --add --push origin git@gitlab.com:root/XXX.git
+在这之后，你的 remote "origin" 就变成类似如下的结构：
+
+[remote "origin"]
+        url = git@github.com:SegmentFault/XXX.git
+        fetch = +refs/heads/*:refs/remotes/origin/*
+        pushurl = git@github.com:SegmentFault/XXX.git
+        pushurl = git@gitlab.com:root/XXX.git
+如此一来，我可以直接 git push origin 就可以推向两个 repos 了。
+
+这两种方法其实各有各的适用场景，自己取舍吧。
+</xmp>
+</body>
+</html>
