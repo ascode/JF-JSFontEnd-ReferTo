@@ -1,0 +1,54 @@
+场景描述：
+使用SecureCRT远程终端连接Linux系统，CRT终端已经设置成UTF-8。
+Linux系统默认语言编码如下
+
+# cat /etc/sysconfig/i18n
+LANG="en_US.UTF-8"
+SYSFONT="latarcyrheb-sun16"
+
+查看当前语言编码也是UTF-8
+
+# locale
+LANG=en_US.UTF-8
+LC_CTYPE="C"
+LC_NUMERIC="C"
+LC_TIME="C"
+LC_COLLATE="C"
+LC_MONETARY="C"
+LC_MESSAGES="C"
+LC_PAPER="C"
+LC_NAME="C"
+LC_ADDRESS="C"
+LC_TELEPHONE="C"
+LC_MEASUREMENT="C"
+LC_IDENTIFICATION="C"
+LC_ALL=C
+
+为何vi的时候输入中文还是乱码呢？其实vi中输入中文乱码与上述系统语言编码无关，是vi自身的环境变量设置出了问题。 
+
+解决办法
+
+哪个用户vi的时候输入中文乱码就在哪个用户主目录下编辑vimrc文件
+
+比如：本例中root用户在vi的时候输入中文乱码
+# vi .vimrc
+
+#设置tab分隔符为4个空格
+set tabstop=4
+
+#解决中文乱码的设置set termencoding=utf-8,gb2312
+set encoding=prc
+
+保存立即生效
+
+Linux中vi显示中文乱码的问题  http://www.linuxidc.com/Linux/2013-01/77798.htm
+
+Vim学习指南 http://www.linuxidc.com/Linux/2013-08/89096.htm
+
+快速学会 Vi编辑器 http://www.linuxidc.com/Linux/2013-08/88586.htm
+
+强大的Vim 编辑器 http://www.linuxidc.com/Linux/2013-07/87544.htm
+
+在CentOS 6.2上搭建Vim开发环境 http://www.linuxidc.com/Linux/2013-07/87363.htm
+
+本文永久更新链接地址：http://www.linuxidc.com/Linux/2015-03/115332.htm
