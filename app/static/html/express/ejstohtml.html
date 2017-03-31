@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+
+<h1>node.js 使用ejs模板引擎时后缀换成.html</h1>
+<xmp>
+	
+
+投稿：hebedich 字体：[增加 减小] 类型：转载 时间：2015-04-22 我要评论
+本文给大家分享一个nodejs的小技巧，将ejs模板引擎的模板后缀改成.html的使用方法，非常的简单实用，这里推荐给大家。
+
+这是一个小技巧，看着.ejs的后缀总觉得不爽，使用如下方法，可以将模板文件的后缀换成我们习惯的.html。
+1.在app.js的头上定义ejs:
+复制代码 代码如下:
+
+var ejs = require('ejs');
+2.注册html模板引擎：
+复制代码 代码如下:
+
+app.engine('html',ejs.__express);
+3.将模板引擎换成html:
+复制代码 代码如下:
+
+app.set('view engine', 'html');
+4.修改模板文件的后缀为.html。
+好了，任务完成，可以运行观看效果了！
+</xmp>
+</body>
+</html>

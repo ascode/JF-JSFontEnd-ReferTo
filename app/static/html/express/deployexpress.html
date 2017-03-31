@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+	</title>
+</head>
+<body>
+
+
+
+	 <h1>Express 开发与部署最佳实践</h1>
+
+	 <xmp>
+ 发布于 1 年前  作者 zhangmingkai4315  17335 次浏览  最后一次编辑是 7 个月前  来自 分享
+本篇文章翻译自expressjs官方网站，源地址如下：express最佳实践 ,分别从dev角度和ops角度讨论了如何提升express应用的运行性能以及部署的最佳方式。
+
+欢迎访问个人blog查看本文内容。
+
+针对开发者需要注意的问题
+
+对于一个express应用我们，一般有以下的几种方法来提升应用的运行效率以及响应率。
+
+使用gzip压缩
+代码中不要使用同步函数
+使用中间件处理静态文件
+合理的日志处理方法
+正确的处理异常
+以下我们将分别对于每个子项目进行展开分析。
+
+1.使用gzip压缩
+
+使用gzip压缩可以显著的减小响应包的大小，这样就提升了客户端的响应速度，我们可以通过使用compression中间件来处理gzip的压缩。对于一个大量用户的网站，最佳的方式是在反向代理端设置压缩方式。可以参考我的另一篇文章专门介绍如何配置nginx来处理压缩和静态文件的。这样的话，我们在代码端就不用再调用compression中间件了，nginx会帮助我们完成此项工作。
+
+var compression = require('compression');
+var express = require('express');
+var app = express();
+app.use(compression());
+2.不要使用同步函数
+
+我们知道node主进程为一个单一线程的程序(异步处理为多线程)。主线程中如果我们调用一些同步函数，而且这些同步函数执行时间较长，则会影响后续程序的执行等待时间。针对web端则表现为其他用户的访问延迟增大。所以在生产环境中，即便一个返回几个微妙的程序，对于大量用户的访问都将会造成积累效应。所以尽量使用异步的方式去编写代码。
+
+如果使用Node.js 4.0+ 或者 io.js 2.1.0+,可以使用参数 --trace-sync-io 去打印针对同步函数的告警信息。
+
+3.使用中间件来处理静态文件
+
+我们有时候调用res.sendFile()来处理静态文件，但是不要在生产环境中使用，这样会针对每个请求都去读该文件，不仅没有效率而且影响整体的性能，可以通过使用serve-static中间件来处理文件，但是我们推荐的更好的方式是使用nginx等反向代理静态文件。
+
+4.合理的日志处理方式
+
+我们在开发环境中有时候会通过console.log或者console.err标记一些点或者调试输出内容.但是这些函数都是同步的，将输出内容输出到终端与输出到文件的道理是相同，所以在生产环境中不要这样做。除非不得已去讲输出传递到另一个程序中的时候。我们可以使用debug模块来实现输出，该模块将判断环境变量是否是开发环境，执行debug输出，保证你的程序的异步处理。对于记录日志的话，大家可以参考一篇针对日志系统的比较文章比较Winston和Bunyan。
+
+5. 正确的处理异常
+
+首先对于node程序来说，一旦遇到不可处理的异常，则整个进程就会down掉，如果我们配置了pm2或者forever这样的进程管理工具的话，他会帮助我们去处理我们的程序失败自启动。
+
+对于代码中异常的处理我们一般的使用方法：
+
+使用try-catch
+使用promises
+这里有一篇文章比较详细的介绍了如何构建健壮的程序来处理错误异常，供参考链接地址
+
+不要使用uncaughtException来处理所有的异常，虽然一定程度上可以导致你的程序不中断，但是程序将包含不稳定的代码持续的运行下去，这样的代码运行在线上可能造成的后果更加的严重，甚至有过建议将该错误处理方式移除node内核。
+
+也不要使用domains来处理错误，该模块已被标记为待移除模块。
+
+使用try-catch是一种比较简单的错误处理方式，比如下面的代码：
+
+app.get('/search', function (req, res) {
+ // Simulating async operation
+ setImmediate(function () {
+   var jsonStr = req.query.params;
+   try {
+     var jsonObj = JSON.parse(jsonStr);
+     res.send('Success');
+   } catch (e) {
+     res.status(400).send('Invalid JSON string');
+   }
+ });
+});
+但是我们知道try-catch只能应用在同步的代码上面，对于异步的代码处理我们无法使用该方式进行处理。对于异步代码的异常处理我们可以使用promises来完成。只需要增加一个catch()方法就可以捕获流程中的整个代码块的异常。
+
+app.get('/', function (req, res, next) {
+  // do some sync stuff
+  queryDb()
+    .then(function (data) {
+      // handle data
+      return makeCsv(data)
+    })
+    .then(function (csv) {
+      // handle csv
+    })
+    .catch(next);
+});
+
+app.use(function (err, req, res, next) {
+  // handle error
+});
+当然了，我们需要在每个代码块中都加入promises返回。更多的信息可以参考一下链接Asynchronous Error Handling in Express with Promises, Generators and ES7。
+
+生产环境安装部署
+
+以下我们讨论的是针对生产环境中express应用安装部署上需要注意的问题。
+
+设置NODE_ENV为“production”
+确保应用的自动重启
+将应用部署一个集群中
+缓存请求结果
+使用负载均衡
+使用反向代理
+1. 设置运行环境变量
+
+一般我们设置node环境变量有两种，分别是 development 和 production。设置环境变量为production将会使得express应用
+
+缓存视图模板
+缓存css文件
+生成更少的冗余错误信息
+另外如果大家感兴趣的话可以查看这篇文章环境变量测试，这里作者对于设置该变量前后做了一些性能上的对比，非常详细。
+
+如果我们使用upstart来管理应用的话我们需要配置文件中加入环境变量
+
+# /etc/init/env.conf
+env NODE_ENV=production
+如果是使用systemd来管理的话，则修改配置文件如下：
+
+# /etc/systemd/system/myservice.service
+Environment=NODE_ENV=production
+2.确保自启动
+
+这里自启动不仅仅指的是如何在程序异常终止之后启动而且还要保证程序在操作系统重启之后能自启动。这里我们分别介绍下两种情况。
+
+使用一个进程管理器
+进程管理器一般可以帮助我们，获得进程的运行性能和资源的消耗，动态的修改配置提升性能，集群控制。这里我么推荐的一般可以使用strongloop process manager或者pm2还有forever，同样详细的参考如下链接进程管理器比较
+通过上述的比较我们可以看出，strongloop的进程管理器支持的特性更丰富一些，特别是查看cpu占用堆占用，集成操作系统脚本，远程管理集群等等。
+
+随系统启动的程序自启动
+随系统启动的程序，我们可以使用之前的进程管理器，forever应该是不支持的。其他的都可以生成对应的启动脚本，当操作系统启动的时候，进程管理器启动，并带动程序的启动。或者我们可以直接配置使用systemd等方式来管理进程的开机启动。
+我们这里简单的通过介绍systemd的方式来介绍如何设置程序的随系统启动。systemd是一个linux系统的服务管理器。一个systemd的配置文件被称作为unit file.以.service为后缀。
+
+[Unit]
+Description=Awesome Express App
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/node /projects/myapp/index.js
+WorkingDirectory=/projects/myapp
+
+User=nobody
+Group=nogroup
+
+# Environment variables:
+Environment=NODE_ENV=production
+
+# Allow many incoming connections
+LimitNOFILE=infinity
+
+# Allow core dumps for debugging
+LimitCORE=infinity
+
+StandardInput=null
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+3. 将app运行在一个集群中
+
+在多核心处理上运行的应用，可以通过使用cluster模块启动多个实例运行在不同的处理器上。并在多个实例上实现“负载均衡”。
+image
+但是对于不同的实例，由于内存空间的隔离，导致所有的程序对象都是本地的，无法实现共享，但是我们可以借助于redis这样的工具实现对象的共享。并且对于某个进程的终端不会影响其他进程的处理，只需要在编写代码的时候记录此次终端并生成一个新的实例即可。
+
+我们可以使用node的cluster模块（需要编写代码实现）或者是strongloop的进程管理器来处理，并且不需要修改代码。strongloop PM将根据cpu的数目自动的生成多个进程，并且可以手动调整该值。
+
+4. 缓存请求
+
+使用缓存，可以极大的提升响应速度，而不需要对于重复的请求做重复的操作。我们可以使用nginx缓存配置来配置缓存
+
+5. 使用负载均衡
+
+单一的express进程服务，不管如何优化都无法达到一个很高的性能需求，特别是对于一个拥有很多用户的web应用。我们可以通过使用一个负载均衡器来完成应用的水平的扩展。比如使用nginx或者HAProxy来完成负载均衡。在使用负载均衡的时候，我们可能需要确保每一个请求关联相对应的会话ID落到同一个进程上。这里有一篇文章可以供参考，了解如何配置负载均衡socket.io配置负载均衡
+
+另外strongloop pm可以很好的与nginx配合设置负载均衡。
+
+6. 反向代理服务
+
+反向代理服务器一般设置在请求入口处，完成错误页面处理，压缩处理，缓存和静态文件处理，负载均衡操作等等。具体的可参考nginx或者HAProxy的配置来完成反向代理服务的搭建。
+
+PS: 个人网站 www.jsmean.com 。基于mean stack 开发。主要是讨论一些js相关内容，欢迎大家访问
+</xmp>
+
+
+参考：https://cnodejs.org/topic/56a3c8f47ec020ed4b96b2cd
+</body>
+</html>

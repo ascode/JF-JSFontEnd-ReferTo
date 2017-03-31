@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+<xmp>
+ejs learning
+nodejs的模板引擎有很多， ejs是比较简单和容易上手的。常用的一些语法:
+
+用<%...%>包含js代码
+用<%=...%>输出变量 变量若包含 '<' '>' '&'等字符 会被转义
+用<%-...%>输出变量 不转义
+用<%- include('user/show') %>引入其他模板 包含 ./user/show.ejs
+用<%# some comments %>来注释，不执行不输出
+<%% 转义为 '<%'
+<% ... -%> 删除新的空白行模式?
+<%_ ... _%> 删除空白符模式
+安装
+npm install ejs
+bower install ejs
+//ejs可以配合express框架使用，或直接在node中/浏览器中使用
+基本用法
+//template.ejs:
+<% if(comic) { %>
+    <h2><%=comic.name%></h2>
+<% } %>
+
+//test.js:
+var comic = {name: 'one  piece'};
+
+// 渲染文件模板,
+// comic.ejs 包含 header.ejs footer.ejs, 
+// 若include了文件 必须指定 filename参数 , 参数为文件路径，
+// 文件所在目录为查找include资源的目录  path.diranme(specialFilepath) 
+var html = ejs.render( fs.readFileSync('comic.ejs', 'utf8'), {'comic': comic}, {filename: __dirname+'\\abc.js'});
+console.log(html);
+方法
+ejs.compile() ejs.render()
+
+var template = ejs.compile(str, options); //=> function
+template(data); //=> html
+
+ejs.render(str, data, options); //=>html
+
+//or 把str data options都放在一个object中传入
+ejs.render(allOptions);
+options参数
+cache 缓存编译后的函数(ejs.compile(..) ,需要 filename参数作为缓存的key
+filename 用于缓存的key，和include
+context 函数的执行上下文
+compileDebug 输出compile的信息来跟踪调试
+client 返回编译后的函数
+delimiter <% .. %> 指这里的%
+debug 输出ejs.compile()得到函数的函数体
+strict ejs.compile()返回的函数是否执行在严格模式
+_with 是否使用 with(){..} 来访问本地变量
+localsName 保存本地变量的对象名，默认为locals
+rmWhitespace 移除多余空格
+include(文件包含)
+被包含文件的路径可以是：绝对路径或相对路径,还可以传入data
+
+<ul>
+    <% users.forEach(function(user){ %>
+        <%- include('user/show', {user: user}) %>
+    <%});%>
+</ul>
+include是在运行时被执行的，所以可以支持路径为变量, 如：
+
+    <% somePath='some/path' %>
+    ...
+    <%- include(somePath) %>
+自定义模板定界符
+
+var ejs = require('ejs');
+var users = ['lufy', 'zoro', 'nami'];
+
+//渲染字符串模板时，指定分隔符
+//<%= ... %> 输出变量 输出表达式的结果
+var ret1 = ejs.render('<?=users.join(" | "); ?> ', {users: users}, {delimiter: '?'});
+console.log(ret1);  //=>lufy | zoro | nami
+
+// 全局指定分隔符
+ejs.delimiter = '$';
+var ret2 = ejs.render('<$= users.join(" | "); $>', {users: users});
+console.log(ret2);
+页面布局
+ejs没有显式的支持布局功能，但是可以通过 include 页头页脚的方式，实现基本的布局。
+
+//comic.ejs:
+<%- include('header'); %>
+<h1>hot comic now: </h1>
+<% if(comic) { %>
+    <h2><%= comic.name %></h2>
+<% } %>
+<%- include('footer')  %>
+
+//test.js:
+var html = ejs.render( fs.readFileSync('comic.ejs', 'utf8'), {'comic': comic}, {filename: __dirname+'\\abc.js'});
+
+</xmp>
+</body>
+</html>
