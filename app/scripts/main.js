@@ -7,12 +7,14 @@ require.config({
     }　　
 });
 
+
+
 define(['require'], function(require) {
-    require(["test", "index","jquery"], function(test, index,$) {
+    require(["test", "index","jquery","es6-shim"], function(test, index,$) {
         // console.log(test);
         // console.log(index);
         console.log("第一个require");
-    	$("body").html($("body").html() + 'jinfei');
+    	$("body").html($("body").html() + 'jinfei' + james.perform());
     });
     console.log("main");
 
